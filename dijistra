@@ -1,0 +1,138 @@
+import java.util.*;
+class Dijkstra {
+    static final int INF = Integer.MAX_VALUE;
+    int V;
+    List<int[]>[] adj; // adj[u] = list of {v, weight}
+
+    @SuppressWarnings("unchecked")
+    public Dijkstra(int vertices) {
+        this.V = vertices;
+        adj = new ArrayList[V];
+        for (int i = 0; i < V; i++) adj[i] = new ArrayList<>();
+    }
+
+    public void addEdge(int u, int v, int w) {
+        adj[u].add(new int[]{v, w});
+        adj[v].add(new int[]{u, w}); // undirected graph
+    }
+
+    public void dijkstra(int source) {
+        int[] dist   = new int[V];
+        int[] parent = new int[V];
+        boolean[] visited = new boolean[V];
+
+        Arrays.fill(dist, INF);
+        Arrays.fill(parent, -1);
+        dist[source] = 0;
+
+        // Min-heap: {distance, node}
+        PriorityQueue<int[]> pq = new PriorityQueue<>(Comparator.comparingInt(a -> a[0]));
+        pq.add(new int[]{0, source});
+
+        System.out.println("=== Dijkstra's Algorithm ===");
+        System.out.println("Source Node: " + source + "\n");
+        System.out.printf("%-10s %-12s %-10s%n", "Step", "Node Visited", "Distance");
+        System.out.println("-".repeat(35));
+
+        int step = 1;
+
+        while (!pq.isEmpty()) {
+            int[] curr = pq.poll();
+            int d = curr[0], u = curr[1];
+
+            if (visited[u]) continue;
+            visited[u] = true;
+
+            System.out.printf("%-10d %-12d %-10d%n", step++, u, d);
+
+            for (int[] edge : adj[u]) {
+                int v = edge[0], w = edge[1];
+                if (!visited[v] && dist[u] + w < dist[v]) {
+                    dist[v] = dist[u] + w;
+                    parent[v] = u;
+                    pq.add(new int[]{dist[v], v});
+                }
+            }
+        }
+
+        // Print shortest distances table
+        System.out.println("\n--- Shortest Distances from Node " + source + " ---");
+        System.out.printf("%-8s %-12s %-20s%n", "Node", "Distance", "Path");
+        System.out.println("-".repeat(42));
+        for (int i = 0; i < V; i++) {
+            String path = getPath(parent, source, i);
+            String distStr = (dist[i] == INF) ? "INF" : String.valueOf(dist[i]);
+            System.out.printf("%-8d %-12s %-20s%n", i, distStr, path);
+        }
+
+        // Print Shortest Path Tree (SPT) edges
+        System.out.println("\n--- Shortest Path Tree (SPT) Edges ---");
+        System.out.println("(Parent -> Child : Edge Weight)");
+        for (int i = 0; i < V; i++) {
+            if (parent[i] != -1) {
+                int edgeWeight = dist[i] - dist[parent[i]];
+                System.out.println("  " + parent[i] + " -> " + i + " : " + edgeWeight);
+            }
+        }
+    }
+
+    // Reconstruct path from source to node
+    private String getPath(int[] parent, int source, int node) {
+        if (node == source) return String.valueOf(source);
+        if (parent[node] == -1) return "No path";
+
+        Deque<Integer> path = new ArrayDeque<>();
+        int curr = node;
+        while (curr != -1) {
+            path.push(curr);
+            curr = parent[curr];
+        }
+
+        StringBuilder sb = new StringBuilder();
+        while (!path.isEmpty()) {
+            sb.append(path.pop());
+            if (!path.isEmpty()) sb.append(" -> ");
+        }
+        return sb.toString();
+    }
+
+    public static void main(String[] args) {
+        /*
+         * Graph from assignment image:
+         * Nodes: 0, 1, 2, 3, 4, 5, 6, 7, 8
+         *
+         * Reading edges & weights from the graph image carefully:
+         *   0-1: 4,  0-7: 8
+         *   1-2: 8,  1-7: 11
+         *   2-3: 7,  2-5: 4,  2-8: 2
+         *   3-4: 9,  3-5: 14
+         *   4-5: 10
+         *   5-6: 2
+         *   6-7: 1,  6-8: 6
+         *   7-8: 7
+         *
+         * From image nodes: 0,1,2,3,4,5,6,7,8
+         * Edge weights visible: 8,7,9,4,2,14,10,2,11,1,6,7,4,8
+         */
+
+        Dijkstra g = new Dijkstra(9);
+
+        // Edges based on the assignment graph (9 nodes: 0-8)
+        g.addEdge(0, 1, 4);
+        g.addEdge(0, 7, 8);
+        g.addEdge(1, 2, 8);
+        g.addEdge(1, 7, 11);
+        g.addEdge(2, 3, 7);
+        g.addEdge(2, 5, 4);
+        g.addEdge(2, 8, 2);
+        g.addEdge(3, 4, 9);
+        g.addEdge(3, 5, 14);
+        g.addEdge(4, 5, 10);
+        g.addEdge(5, 6, 2);
+        g.addEdge(6, 7, 1);
+        g.addEdge(6, 8, 6);
+        g.addEdge(7, 8, 7);
+
+        g.dijkstra(0); // Source is Node 0
+    }
+}
